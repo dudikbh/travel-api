@@ -1,0 +1,290 @@
+
+
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>חיפוש מסלולים - מערכת הזמנת נסיעות</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="app-header">
+        <button onclick="goBack()" class="back-btn">← אחורה</button>
+        <h1>חיפוש מסלולים</h1>
+        <button onclick="logout()" class="logout-btn">התנתק</button>
+      </div>
+      
+      <div class="app-content fade-in">
+        <!-- חיפוש מסלולים -->
+        <div class="card">
+          <div class="card-header">חפש מסלול</div>
+          
+          <div class="search-container">
+            <div class="search-row">
+              <div class="form-group">
+                <label for="origin">מוצא</label>
+                <input 
+                  type="text" 
+                  id="origin" 
+                  class="form-input"
+                  placeholder="הכנס נקודת מוצא"
+                  list="origins-list"
+                />
+                <datalist id="origins-list"></datalist>
+              </div>
+              
+              <div class="form-group">
+                <label for="destination">יעד</label>
+                <input 
+                  type="text" 
+                  id="destination" 
+                  class="form-input"
+                  placeholder="הכנס נקודת יעד"
+                  list="destinations-list"
+                />
+                <datalist id="destinations-list"></datalist>
+              </div>
+            </div>
+            
+            <div class="search-buttons">
+              <button onclick="searchRoute()" class="btn btn-primary">חפש</button>
+              <button onclick="resetSearch()" class="btn btn-secondary">איפוס</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- תוצאות חיפוש -->
+        <div id="search-results" class="card" style="display: none;">
+          <div class="card-header">תוצאות חיפוש</div>
+          <div id="route-details"></div>
+          
+          <!-- כפתור שיתוף לווטסאפ -->
+          <div class="share-section" style="text-align: center; margin-top: 20px;">
+            <button id="whatsapp-btn" onclick="shareToWhatsApp()" class="whatsapp-btn" style="display: none;">
+              <span class="whatsapp-icon">📱</span>
+              שתף בווטסאפ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let allRoutes = [];
+      let currentRoute = null;
+
+      function goBack() {
+        window.history.back();
+      }
+
+      function logout() {
+        localStorage.removeItem('savedLogin');
+        window.location.href = '/';
+      }
+
+      // איפוס החיפוש
+      function resetSearch() {
+        document.getElementById('origin').value = '';
+        document.getElementById('destination').value = '';
+        document.getElementById('search-results').style.display = 'none';
+        document.getElementById('whatsapp-btn').style.display = 'none';
+        currentRoute = null;
+      }
+
+      // טעינת כל המסלולים
+      async function loadRoutes() {
+        try {
+          const response = await fetch('/api/prices');
+          const routes = await response.json();
+          allRoutes = routes;
+          populateDataLists();
+        } catch (error) {
+          console.error('שגיאה בטעינת המסלולים:', error);
+        }
+      }
+
+      // מילוי רשימות השלמה אוטומטית
+      function populateDataLists() {
+        const origins = new Set();
+        const destinations = new Set();
+
+        allRoutes.forEach(route => {
+          if (route.route) {
+            const parts = route.route.split(' - ');
+            if (parts.length === 2) {
+              origins.add(parts[0].trim());
+              destinations.add(parts[1].trim());
+            }
+          }
+        });
+
+        // מילוי רשימת מוצאים
+        const originsList = document.getElementById('origins-list');
+        originsList.innerHTML = '';
+        origins.forEach(origin => {
+          const option = document.createElement('option');
+          option.value = origin;
+          originsList.appendChild(option);
+        });
+
+        // מילוי רשימת יעדים
+        const destinationsList = document.getElementById('destinations-list');
+        destinationsList.innerHTML = '';
+        destinations.forEach(destination => {
+          const option = document.createElement('option');
+          option.value = destination;
+          destinationsList.appendChild(option);
+        });
+      }
+
+      // חיפוש מסלול
+      function searchRoute() {
+        const origin = document.getElementById('origin').value.trim();
+        const destination = document.getElementById('destination').value.trim();
+
+        if (!origin || !destination) {
+          alert('אנא מלא את שדות המוצא והיעד');
+          return;
+        }
+
+        const searchQuery = `${origin} - ${destination}`;
+        const foundRoute = allRoutes.find(route => 
+          route.route && route.route.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        if (foundRoute) {
+          currentRoute = foundRoute;
+          displayRouteDetails(foundRoute);
+          document.getElementById('whatsapp-btn').style.display = 'inline-block';
+        } else {
+          // חיפוש חלקי
+          const partialMatch = allRoutes.find(route => 
+            route.route && 
+            route.route.toLowerCase().includes(origin.toLowerCase()) &&
+            route.route.toLowerCase().includes(destination.toLowerCase())
+          );
+
+          if (partialMatch) {
+            currentRoute = partialMatch;
+            displayRouteDetails(partialMatch);
+            document.getElementById('whatsapp-btn').style.display = 'inline-block';
+          } else {
+            document.getElementById('search-results').style.display = 'block';
+            document.getElementById('route-details').innerHTML = `
+              <div class="no-results">
+                <p>לא נמצא מסלול מ${origin} ל${destination}</p>
+                <p>אנא בדוק את הפרטים או פנה לשירות לקוחות</p>
+              </div>
+            `;
+            document.getElementById('whatsapp-btn').style.display = 'none';
+          }
+        }
+      }
+
+      // הצגת פרטי המסלול
+      function displayRouteDetails(route) {
+        document.getElementById('search-results').style.display = 'block';
+        
+        let html = `<div class="route-info"><h3>${route.route}</h3>`;
+        
+        // פרטי המסלול
+        if (route.km) {
+          html += `<div class="detail-item"><strong>מרחק משוער:</strong> ${route.km} ק"מ</div>`;
+        }
+        
+        if (route.waitTimeSides) {
+          html += `<div class="detail-item"><strong>זמן המתנה צדדים:</strong> ${route.waitTimeSides} דקות</div>`;
+        }
+        
+        // מחירי רכבים
+        html += '<div class="prices-section"><h4>מחירים:</h4>';
+        
+        if (route.vehicles?.car4) {
+          html += `<div class="price-item">🚗 <strong>רכב 4 מקומות:</strong> ₪${route.vehicles.car4}`;
+          if (route.vehiclesSides?.car4) {
+            html += ` (צדדים: ₪${route.vehiclesSides.car4})`;
+          }
+          html += '</div>';
+        }
+        
+        if (route.vehicles?.car6) {
+          html += `<div class="price-item">🚐 <strong>רכב 6 מקומות:</strong> ₪${route.vehicles.car6}`;
+          if (route.vehiclesSides?.car6) {
+            html += ` (צדדים: ₪${route.vehiclesSides.car6})`;
+          }
+          html += '</div>';
+        }
+        
+        if (route.vehicles?.car6plus) {
+          html += `<div class="price-item">🚐 <strong>רכב 6 מקומות מרווח:</strong> ₪${route.vehicles.car6plus}`;
+          if (route.vehiclesSides?.car6plus) {
+            html += ` (צדדים: ₪${route.vehiclesSides.car6plus})`;
+          }
+          html += '</div>';
+        }
+        
+        html += '</div></div>';
+        
+        document.getElementById('route-details').innerHTML = html;
+      }
+
+      // שיתוף בווטסאפ
+      function shareToWhatsApp() {
+        if (!currentRoute) return;
+
+        let message = `🚗 פרטי מסלול: ${currentRoute.route}\n`;
+        
+        if (currentRoute.km) message += `📏 מרחק משוער: ${currentRoute.km} ק"מ\n`;
+        if (currentRoute.waitTimeSides) message += `⏳ זמן המתנה צדדים: ${currentRoute.waitTimeSides} דקות\n`;
+        
+        message += '\n💰 מחירים:\n';
+        
+        if (currentRoute.vehicles?.car4) {
+          message += `🚗 רכב 4 מקומות: ₪${currentRoute.vehicles.car4}`;
+          if (currentRoute.vehiclesSides?.car4) {
+            message += ` (צדדים: ₪${currentRoute.vehiclesSides.car4})`;
+          }
+          message += '\n';
+        }
+        
+        if (currentRoute.vehicles?.car6) {
+          message += `🚐 רכב 6 מקומות: ₪${currentRoute.vehicles.car6}`;
+          if (currentRoute.vehiclesSides?.car6) {
+            message += ` (צדדים: ₪${currentRoute.vehiclesSides.car6})`;
+          }
+          message += '\n';
+        }
+        
+        if (currentRoute.vehicles?.car6plus) {
+          message += `🚐 רכב 6 מקומות מרווח: ₪${currentRoute.vehicles.car6plus}`;
+          if (currentRoute.vehiclesSides?.car6plus) {
+            message += ` (צדדים: ₪${currentRoute.vehiclesSides.car6plus})`;
+          }
+          message += '\n';
+        }
+
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+      }
+
+      // אירועי מקלדת לחיפוש מהיר
+      document.getElementById('origin').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          document.getElementById('destination').focus();
+        }
+      });
+
+      document.getElementById('destination').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          searchRoute();
+        }
+      });
+
+      // טעינת המסלולים בעת טעינת הדף
+      document.addEventListener('DOMContentLoaded', loadRoutes);
+    </script>
+  </body>
+</html>
+

@@ -1,0 +1,206 @@
+// גרסה מתוקנת: תומכת בכל הפרמטרים מהטופס כולל מחיר, זמן, תחנה וכו'
+const express = require("express");
+const bodyParser = require("body-parser");
+const path = require("path");
+const { connect } = require("./mongo");
+const { ObjectId } = require("mongodb");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "public")));
+
+// דפי HTML
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
+app.get("/users", (req, res) => res.sendFile(path.join(__dirname, "public", "users.html")));
+app.get("/prices.html", (req, res) => res.sendFile(path.join(__dirname, "public", "prices.html")));
+
+// התחברות
+app.post("/api/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const users = await connect("users");
+    const user = await users.findOne({ username, password });
+    if (!user) return res.status(401).json({ message: "שם משתמש או סיסמה שגויים" });
+    if (!user.approved) return res.status(403).json({ message: "המשתמש לא אושר" });
+    res.json({ message: "התחברת בהצלחה", role: user.role });
+  } catch (err) {
+    res.status(500).json({ message: "שגיאה בשרת" });
+  }
+});
+
+// הרשמה
+app.post("/api/register", async (req, res) => {
+  try {
+    const { username, password, firstName, lastName, email, phone } = req.body;
+    if (!username || !password || !firstName || !lastName || !email || !phone)
+      return res.status(400).json({ message: "יש למלא את כל השדות" });
+
+    const users = await connect("users");
+    const exists = await users.findOne({ username });
+    if (exists) return res.status(409).json({ message: "המשתמש כבר קיים" });
+
+    await users.insertOne({ username, password, firstName, lastName, email, phone, role: "client", approved: false });
+    res.json({ message: "נרשמת בהצלחה! נא להמתין לאישור מנהל" });
+  } catch (err) {
+    res.status(500).json({ message: "שגיאה ברישום" });
+  }
+});
+
+// משתמשים
+app.get("/api/users", async (req, res) => {
+  try {
+    const users = await connect("users");
+    const list = await users.find().toArray();
+    res.json(list);
+  } catch {
+    res.status(500).json({ message: "שגיאה" });
+  }
+});
+
+app.put("/api/users/approve/:id", async (req, res) => {
+  try {
+    const users = await connect("users");
+    await users.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { approved: true } });
+    res.json({ message: "אושר" });
+  } catch {
+    res.status(500).json({ message: "שגיאה" });
+  }
+});
+
+app.delete("/api/users/:id", async (req, res) => {
+  try {
+    const users = await connect("users");
+    await users.deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ message: "נמחק" });
+  } catch {
+    res.status(500).json({ message: "שגיאה" });
+  }
+});
+
+// הוספת מסלול
+app.post("/api/admin/add-route", async (req, res) => {
+  try {
+    const { origin, destination, km, waitTimeSides, vehicles, vehiclesSides } = req.body;
+    const route = `${origin} - ${destination}`;
+    const collection = await connect("routes");
+
+    await collection.insertOne({
+      route,
+      km,
+      waitTimeSides,
+      vehicles: {
+        car4: vehicles?.car4 || null,
+        car6: vehicles?.car6 || null,
+        car6plus: vehicles?.car6plus || null
+      },
+      vehiclesSides: {
+        car4: vehiclesSides?.car4 || null,
+        car6: vehiclesSides?.car6 || null,
+        car6plus: vehiclesSides?.car6plus || null
+      }
+    });
+
+    res.json({ message: "המסלול נוסף בהצלחה" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "שגיאה בהוספת המסלול" });
+  }
+});
+
+// שליפת מסלולים
+app.get("/api/prices", async (req, res) => {
+  try {
+    const collection = await connect(); // "routes"
+    const data = await collection.find({}).toArray();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: "שגיאה בשליפה" });
+  }
+});
+
+// שליפת כל המשתמשים (למנהל)
+app.get("/api/users", async (req, res) => {
+  try {
+    const usersCollection = await connect("users");
+    const users = await usersCollection.find({}).toArray();
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "שגיאת שרת" });
+  }
+});
+
+// אישור משתמש
+app.put("/api/admin/users/:id/approve", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { ObjectId } = require('mongodb');
+    const usersCollection = await connect("users");
+
+    await usersCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { approved: true } }
+    );
+
+    res.json({ message: "המשתמש אושר בהצלחה" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "שגיאה באישור המשתמש" });
+  }
+});
+
+// מחיקת משתמש
+app.delete("/api/admin/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { ObjectId } = require('mongodb');
+    const usersCollection = await connect("users");
+
+    await usersCollection.deleteOne({ _id: new ObjectId(id) });
+    res.json({ message: "המשתמש נמחק בהצלחה" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "שגיאה במחיקת המשתמש" });
+  }
+});
+
+// עדכון מסלול
+app.put("/api/admin/routes/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { origin, destination, km, waitTime, vehicles } = req.body;
+    const route = `${origin} - ${destination}`;
+    const { ObjectId } = require('mongodb');
+
+    const collection = await connect();
+    await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { route, km, waitTime, vehicles } }
+    );
+
+    res.json({ message: "המסלול עודכן בהצלחה" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "שגיאה בעדכון המסלול" });
+  }
+});
+
+// מחיקת מסלול
+app.delete("/api/admin/routes/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { ObjectId } = require('mongodb');
+    const collection = await connect();
+
+    await collection.deleteOne({ _id: new ObjectId(id) });
+    res.json({ message: "המסלול נמחק בהצלחה" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "שגיאה במחיקת המסלול" });
+  }
+});
+
+app.listen(PORT, () => console.log("Server on port", PORT));

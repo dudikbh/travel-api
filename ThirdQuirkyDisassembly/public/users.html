@@ -1,0 +1,71 @@
+
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>אזור משתמש - מערכת הזמנת נסיעות</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="app-header">
+        <button onclick="goBack()" class="back-btn">← יציאה</button>
+        <h1>אזור משתמש</h1>
+      </div>
+      
+      <div class="app-content fade-in">
+        <div class="card">
+          <div class="card-header">ברוך הבא למערכת!</div>
+          <p style="text-align: center; color: #666; margin: 20px 0;">
+            כאן תוכל לצפות במחירי הנסיעות ולהזמין מונית
+          </p>
+          
+          <button onclick="goToPrices()" class="btn btn-primary">
+            צפה במחירי נסיעות
+          </button>
+          
+          <button onclick="logout()" class="btn btn-secondary">
+            התנתק מהמערכת
+          </button>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">מידע שימושי</div>
+          <div class="list-item">
+            <div class="list-item-header">איך להזמין?</div>
+            <div class="list-item-content">
+              1. עבור לדף מחירי הנסיעות<br>
+              2. חפש את המסלול הרצוי<br>
+              3. שתף את הפרטים בוואטסאפ<br>
+              4. התקשר למספר המופיע
+            </div>
+          </div>
+          
+          <div class="list-item">
+            <div class="list-item-header">זמני המתנה</div>
+            <div class="list-item-content">
+              זמני ההמתנה משתנים בהתאם לשעה ויום השבוע.
+              לפרטים מדויקים התקשר מראש.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function goBack() {
+        logout();
+      }
+      
+      function goToPrices() {
+        window.location.href = '/prices.html';
+      }
+      
+      function logout() {
+        localStorage.removeItem('savedLogin');
+        window.location.href = '/';
+      }
+    </script>
+  </body>
+</html>

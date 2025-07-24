@@ -1,0 +1,127 @@
+
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>התחברות - מערכת הזמנת נסיעות</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="app-header">
+        <h1>מערכת הזמנת נסיעות</h1>
+      </div>
+      
+      <div class="app-content fade-in">
+        <div class="card">
+          <div class="card-header">התחברות למערכת</div>
+          
+          <form id="login-form" class="form-container">
+            <div class="form-group">
+              <label for="username">שם משתמש</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                class="form-input"
+                placeholder="הכנס שם משתמש"
+                autocomplete="off"
+                required
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="password">סיסמה</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-input"
+                placeholder="הכנס סיסמה"
+                autocomplete="new-password"
+                required
+              />
+            </div>
+            
+            <div class="checkbox-container">
+              <input type="checkbox" id="remember" />
+              <label for="remember">זכור אותי במכשיר זה</label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">התחבר למערכת</button>
+          </form>
+          
+          <div id="msg" class="message" style="display: none;"></div>
+        </div>
+        
+        <div class="card">
+          <p style="text-align: center; color: #666; margin: 0;">
+            אין לך חשבון? 
+            <a href="register.html">הירשם כאן</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // בדיקת התחברות קיימת
+      const saved = JSON.parse(localStorage.getItem("savedLogin"));
+      if (saved && saved.role && new Date().getTime() < saved.expiry) {
+        if (saved.role === "admin") window.location.href = "/admin.html";
+        else if (saved.role === "client") window.location.href = "/prices.html";
+      }
+
+      // טיפול בהתחברות
+      document.getElementById("login-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const remember = document.getElementById("remember").checked;
+        const msgEl = document.getElementById("msg");
+
+        // הצגת מצב טעינה
+        msgEl.textContent = "מתחבר...";
+        msgEl.className = "message";
+        msgEl.style.display = "block";
+
+        try {
+          const res = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
+          
+          const data = await res.json();
+
+          if (res.ok) {
+            msgEl.textContent = "התחברת בהצלחה! מעביר...";
+            msgEl.className = "message success";
+            
+            if (remember) {
+              const now = new Date().getTime();
+              const oneDay = 24 * 60 * 60 * 1000;
+              const expiry = now + oneDay;
+              localStorage.setItem(
+                "savedLogin",
+                JSON.stringify({ role: data.role, expiry }),
+              );
+            }
+
+            setTimeout(() => {
+              if (data.role === "admin") window.location.href = "/admin.html";
+              else window.location.href = "/prices.html";
+            }, 1000);
+          } else {
+            msgEl.textContent = data.message;
+            msgEl.className = "message error";
+          }
+        } catch (error) {
+          msgEl.textContent = "שגיאה בחיבור לשרת";
+          msgEl.className = "message error";
+        }
+      });
+    </script>
+  </body>
+</html>

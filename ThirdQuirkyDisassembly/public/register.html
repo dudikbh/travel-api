@@ -1,0 +1,162 @@
+
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>הרשמה - מערכת הזמנת נסיעות</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="app-header">
+        <button onclick="goBack()" class="back-btn">← אחורה</button>
+        <h1>הרשמה למערכת</h1>
+      </div>
+      
+      <div class="app-content fade-in">
+        <div class="card">
+          <div class="card-header">פרטים אישיים</div>
+          
+          <form id="register-form" class="form-container">
+            <div class="form-group">
+              <label for="firstName">שם פרטי</label>
+              <input 
+                type="text" 
+                id="firstName" 
+                class="form-input"
+                placeholder="הכנס שם פרטי" 
+                required 
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="lastName">שם משפחה</label>
+              <input 
+                type="text" 
+                id="lastName" 
+                class="form-input"
+                placeholder="הכנס שם משפחה" 
+                required 
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="email">כתובת אימייל</label>
+              <input 
+                type="email" 
+                id="email" 
+                class="form-input"
+                placeholder="example@email.com" 
+                required 
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="phone">מספר טלפון</label>
+              <input 
+                type="tel" 
+                id="phone" 
+                class="form-input"
+                placeholder="050-1234567" 
+                required 
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="username">שם משתמש</label>
+              <input 
+                type="text" 
+                id="username" 
+                class="form-input"
+                placeholder="בחר שם משתמש ייחודי" 
+                required 
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="password">סיסמה</label>
+              <input 
+                type="password" 
+                id="password" 
+                class="form-input"
+                placeholder="בחר סיסמה חזקה" 
+                required 
+              />
+            </div>
+            
+            <button type="submit" class="btn btn-primary">הירשם למערכת</button>
+          </form>
+          
+          <div id="msg" class="message" style="display: none;"></div>
+        </div>
+        
+        <div class="card">
+          <p style="text-align: center; color: #666; margin: 0;">
+            כבר יש לך חשבון? 
+            <a href="index.html">התחבר כאן</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function goBack() {
+        window.history.back();
+      }
+
+      document.getElementById("register-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        
+        const msgEl = document.getElementById("msg");
+        
+        const data = {
+          firstName: document.getElementById("firstName").value,
+          lastName: document.getElementById("lastName").value,
+          email: document.getElementById("email").value,
+          phone: document.getElementById("phone").value,
+          username: document.getElementById("username").value,
+          password: document.getElementById("password").value,
+        };
+
+        // הצגת מצב טעינה
+        msgEl.textContent = "נרשם...";
+        msgEl.className = "message";
+        msgEl.style.display = "block";
+
+        try {
+          const res = await fetch("/api/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+          
+          const result = await res.json();
+          
+          if (res.ok) {
+            msgEl.textContent = result.message;
+            msgEl.className = "message success";
+            
+            // איפוס הטופס
+            document.getElementById("register-form").reset();
+          } else {
+            msgEl.textContent = result.message;
+            msgEl.className = "message error";
+          }
+        } catch (error) {
+          msgEl.textContent = "שגיאה בחיבור לשרת";
+          msgEl.className = "message error";
+        }
+      });
+
+      // אימות טלפון בזמן אמת
+      document.getElementById("phone").addEventListener("input", function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 3) {
+          value = value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+        }
+        e.target.value = value;
+      });
+    </script>
+  </body>
+</html>

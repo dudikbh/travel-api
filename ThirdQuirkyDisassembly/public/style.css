@@ -1,0 +1,605 @@
+/* עיצוב אפליקציה מודרני ונגיש */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  direction: rtl;
+  line-height: 1.6;
+}
+
+/* אפליקציה קונטיינר */
+.app-container {
+  max-width: 400px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: white;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* כותרת אפליקציה */
+.app-header {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+}
+
+.app-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* כפתור אחורה */
+.back-btn {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255,255,255,0.3);
+  transform: translateY(-50%) scale(1.05);
+}
+
+/* תוכן האפליקציה */
+.app-content {
+  padding: 30px 20px;
+  background: white;
+}
+
+/* טפסים */
+.form-container {
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 16px;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+  color: #333;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-input::placeholder {
+  color: #999;
+}
+
+/* כפתורים */
+.btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: #f8f9fa;
+  color: #333;
+  border: 2px solid #e1e5e9;
+}
+
+.btn-secondary:hover {
+  background: #e9ecef;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-small {
+  padding: 8px 16px;
+  font-size: 14px;
+  width: auto;
+  margin: 5px;
+  border-radius: 8px;
+}
+
+/* הודעות */
+.message {
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 12px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+/* טבלאות */
+.table-container {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 20px 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 15px 10px;
+  text-align: center;
+  border-bottom: 1px solid #e1e5e9;
+  font-size: 14px;
+}
+
+.table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+.table td {
+  color: #555;
+}
+
+.table tr:hover {
+  background: #f8f9fa;
+}
+
+/* כרטיסים */
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 15px 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border: 1px solid #e1e5e9;
+}
+
+.card-header {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+/* חיפוש והשלמה אוטומטית */
+.search-container {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.autocomplete-container {
+  position: relative;
+}
+
+.autocomplete-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.autocomplete-suggestion {
+  padding: 12px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f3f4;
+  color: #333;
+  transition: background 0.2s ease;
+}
+
+.autocomplete-suggestion:hover,
+.autocomplete-suggestion.active {
+  background: #f8f9fa;
+}
+
+.autocomplete-suggestion:last-child {
+  border-bottom: none;
+}
+
+/* כפתור שיתוף */
+.share-btn {
+  background: #25d366;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  margin: 10px 5px;
+}
+
+.share-btn:hover {
+  background: #128c7e;
+  transform: translateY(-2px);
+}
+
+.share-btn::before {
+  content: "📱";
+}
+
+/* רשימת פריטים */
+.list-item {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  margin: 10px 0;
+  border: 1px solid #e1e5e9;
+  transition: all 0.3s ease;
+}
+
+.list-item:hover {
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+.list-item-header {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.list-item-content {
+  color: #666;
+  font-size: 14px;
+}
+
+/* מצב טעינה */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.loading::before {
+  content: "⏳";
+  display: block;
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+/* סטטוס */
+.status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status.approved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+/* רספונסיביות */
+@media (max-width: 480px) {
+  .app-container {
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .app-content {
+    padding: 20px 15px;
+  }
+
+  .table th,
+  .table td {
+    padding: 10px 5px;
+    font-size: 12px;
+  }
+
+  .btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+/* אנימציות */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* צ'קבוקס מותאם אישית */
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.checkbox-container input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.checkbox-container label {
+  margin: 0;
+  color: #333;
+  cursor: pointer;
+}
+
+/* לינקים */
+a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* תמיכה בעברית */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+/* חיפוש מסלולים */
+.search-container {
+  padding: 20px 0;
+}
+
+.search-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .search-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+.route-info {
+  text-align: center;
+}
+
+.route-info h3 {
+  color: var(--primary-color);
+  margin-bottom: 20px;
+  font-size: 1.3em;
+}
+
+.route-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.detail-item {
+  padding: 8px;
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.vehicles-section {
+  margin-top: 20px;
+}
+
+.vehicles-section h4 {
+  color: var(--primary-color);
+  margin-bottom: 15px;
+}
+
+.vehicles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.vehicle-item {
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.no-results p {
+  margin: 10px 0;
+  font-size: 1.1em;
+}
+
+/* ווטסאפ */
+.vehicle-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.vehicles-section {
+  margin-top: 20px;
+}
+
+.search-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.share-section {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 15px;
+}
+
+.prices-section {
+  margin-top: 15px;
+}
+
+.price-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.price-item:last-child {
+  border-bottom: none;
+}
+
+.whatsapp-container {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+.whatsapp-btn {
+  background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+  color: white;
+  border: none;
+  padding: 15px 25px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.whatsapp-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+}
+
+.whatsapp-icon {
+  font-size: 20px;
+}
+
+/* רספונסיבי */
+@media (max-width: 768px) {
+  .whatsapp-container {
+    bottom: 80px;
+  }
+}
