@@ -22,10 +22,13 @@ app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
     const users = await connect("users");
-    const user = await users.findOne({ username, password });
+    const user = await users.findOne({ 
+      username: { $regex: new RegExp(`^${username}$`, 'i') }, 
+      password 
+    });
     if (!user) return res.status(401).json({ message: "שם משתמש או סיסמה שגויים" });
-    if (!user.approved) return res.status(403).json({ message: "המשתמש לא אושר" });
-    res.json({ message: "התחברת בהצלחה", role: user.role });
+    if (user.role !== "admin" && !user.approved) return res.status(403).json({ message: "המשתמש לא אושר" });
+    res.json({ message: "התחברת בהצלחה", role: user.role, username: user.username });
   } catch (err) {
     res.status(500).json({ message: "שגיאה בשרת" });
   }
@@ -34,15 +37,25 @@ app.post("/api/login", async (req, res) => {
 // הרשמה
 app.post("/api/register", async (req, res) => {
   try {
-    const { username, password, firstName, lastName, email, phone } = req.body;
-    if (!username || !password || !firstName || !lastName || !email || !phone)
+    const { username, password, firstName, lastName, email, phone, role } = req.body;
+    if (!username || !password || !firstName || !lastName || !email || !phone || !role)
       return res.status(400).json({ message: "יש למלא את כל השדות" });
 
     const users = await connect("users");
-    const exists = await users.findOne({ username });
-    if (exists) return res.status(409).json({ message: "המשתמש כבר קיים" });
+    
+    // בדיקת שם משתמש (ללא תלות ברישיות)
+    const existsUser = await users.findOne({ username: { $regex: new RegExp(`^${username}$`, 'i') } });
+    if (existsUser) return res.status(409).json({ message: "שם המשתמש כבר קיים במערכת" });
+    
+    // בדיקת מייל קיים
+    const existsEmail = await users.findOne({ email });
+    if (existsEmail) return res.status(409).json({ message: "כתובת המייל כבר קיימת במערכת" });
+    
+    // בדיקת טלפון קיים
+    const existsPhone = await users.findOne({ phone });
+    if (existsPhone) return res.status(409).json({ message: "מספר הטלפון כבר קיים במערכת" });
 
-    await users.insertOne({ username, password, firstName, lastName, email, phone, role: "client", approved: false });
+    await users.insertOne({ username: username.toLowerCase(), password, firstName, lastName, email, phone, role, approved: false });
     res.json({ message: "נרשמת בהצלחה! נא להמתין לאישור מנהל" });
   } catch (err) {
     res.status(500).json({ message: "שגיאה ברישום" });
@@ -80,15 +93,36 @@ app.delete("/api/users/:id", async (req, res) => {
   }
 });
 
+// פונקציה לנרמול מסלול (מיון לפי אלפבית)
+function normalizeRoute(origin, destination) {
+  const cities = [origin.trim(), destination.trim()].sort();
+  return `${cities[0]} - ${cities[1]}`;
+}
+
 // הוספת מסלול
 app.post("/api/admin/add-route", async (req, res) => {
   try {
-    const { origin, destination, km, waitTimeSides, vehicles, vehiclesSides } = req.body;
+    const { origin, destination, km, waitTimeSides, vehicles, vehiclesSides, adminUsername } = req.body;
+    
+    if (!origin || !destination) {
+      return res.status(400).json({ message: "יש להזין מוצא ויעד" });
+    }
+
     const route = `${origin} - ${destination}`;
+    const normalizedRoute = normalizeRoute(origin, destination);
     const collection = await connect("routes");
+
+    // בדיקת קיום מסלול (לפי הנרמול)
+    const existingRoute = await collection.findOne({ normalizedRoute });
+    if (existingRoute) {
+      return res.status(409).json({ 
+        message: `המסלול כבר קיים במערכת (${existingRoute.route})` 
+      });
+    }
 
     await collection.insertOne({
       route,
+      normalizedRoute,
       km,
       waitTimeSides,
       vehicles: {
@@ -100,7 +134,9 @@ app.post("/api/admin/add-route", async (req, res) => {
         car4: vehiclesSides?.car4 || null,
         car6: vehiclesSides?.car6 || null,
         car6plus: vehiclesSides?.car6plus || null
-      }
+      },
+      addedBy: adminUsername || "לא ידוע",
+      addedDate: new Date()
     });
 
     res.json({ message: "המסלול נוסף בהצלחה" });
@@ -110,8 +146,25 @@ app.post("/api/admin/add-route", async (req, res) => {
   }
 });
 
-// שליפת מסלולים
+// שליפת מסלולים (ללקוחות - ללא פרטי מנהל)
 app.get("/api/prices", async (req, res) => {
+  try {
+    const collection = await connect(); // "routes"
+    const data = await collection.find({}).project({ 
+      addedBy: 0, 
+      addedDate: 0, 
+      lastModifiedBy: 0, 
+      lastModifiedDate: 0,
+      normalizedRoute: 0 
+    }).toArray();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: "שגיאה בשליפה" });
+  }
+});
+
+// שליפת מסלולים למנהלים (עם פרטי מנהל)
+app.get("/api/admin/routes", async (req, res) => {
   try {
     const collection = await connect(); // "routes"
     const data = await collection.find({}).toArray();
@@ -171,14 +224,47 @@ app.delete("/api/admin/users/:id", async (req, res) => {
 app.put("/api/admin/routes/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { origin, destination, km, waitTime, vehicles } = req.body;
+    const { origin, destination, km, waitTimeSides, vehicles, vehiclesSides, adminUsername } = req.body;
     const route = `${origin} - ${destination}`;
+    const normalizedRoute = normalizeRoute(origin, destination);
     const { ObjectId } = require('mongodb');
 
     const collection = await connect();
+    
+    // בדיקת קיום מסלול אחר עם אותו נרמול (למעט המסלול הנוכחי)
+    const existingRoute = await collection.findOne({ 
+      normalizedRoute, 
+      _id: { $ne: new ObjectId(id) } 
+    });
+    
+    if (existingRoute) {
+      return res.status(409).json({ 
+        message: `המסלול כבר קיים במערכת (${existingRoute.route})` 
+      });
+    }
+
     await collection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: { route, km, waitTime, vehicles } }
+      { 
+        $set: { 
+          route, 
+          normalizedRoute,
+          km, 
+          waitTimeSides, 
+          vehicles: {
+            car4: vehicles?.car4 || null,
+            car6: vehicles?.car6 || null,
+            car6plus: vehicles?.car6plus || null
+          },
+          vehiclesSides: {
+            car4: vehiclesSides?.car4 || null,
+            car6: vehiclesSides?.car6 || null,
+            car6plus: vehiclesSides?.car6plus || null
+          },
+          lastModifiedBy: adminUsername || "לא ידוע",
+          lastModifiedDate: new Date()
+        } 
+      }
     );
 
     res.json({ message: "המסלול עודכן בהצלחה" });

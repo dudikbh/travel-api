@@ -565,6 +565,76 @@ a:hover {
 }
 
 .whatsapp-container {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.route-table .price-table {
+  margin-top: 20px;
+}
+
+.route-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.route-table th,
+.route-table td {
+  padding: 12px 15px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.route-table th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.route-table tr:last-child td {
+  border-bottom: none;
+}
+
+.route-table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.route-table tr:hover {
+  background-color: #e3f2fd;
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+.route-table td:first-child {
+  text-align: right;
+  font-weight: 500;
+}
+
+.route-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.route-header h4 {
+  margin: 0 0 10px 0;
+  font-size: 1.5em;
+}
+
+.route-header p {
+  margin: 5px 0;
+  opacity: 0.9;
+}
+
+.whatsapp-container {
   position: fixed;
   bottom: 20px;
   left: 50%;

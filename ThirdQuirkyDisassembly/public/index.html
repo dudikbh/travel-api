@@ -105,12 +105,13 @@
               const expiry = now + oneDay;
               localStorage.setItem(
                 "savedLogin",
-                JSON.stringify({ role: data.role, expiry }),
+                JSON.stringify({ role: data.role, username: data.username, expiry }),
               );
             }
 
             setTimeout(() => {
               if (data.role === "admin") window.location.href = "/admin.html";
+              else if (data.role === "route_manager") window.location.href = "/route-manager.html";
               else window.location.href = "/prices.html";
             }, 1000);
           } else {

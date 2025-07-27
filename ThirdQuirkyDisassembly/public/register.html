@@ -85,6 +85,14 @@
               />
             </div>
             
+            <div class="form-group">
+              <label for="role">תפקיד</label>
+              <select id="role" class="form-input" required>
+                <option value="client">לקוח</option>
+                <option value="route_manager">מנהל מסלולים</option>
+              </select>
+            </div>
+            
             <button type="submit" class="btn btn-primary">הירשם למערכת</button>
           </form>
           
@@ -117,6 +125,7 @@
           phone: document.getElementById("phone").value,
           username: document.getElementById("username").value,
           password: document.getElementById("password").value,
+          role: document.getElementById("role").value,
         };
 
         // הצגת מצב טעינה

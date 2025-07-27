@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="he" dir="rtl">
   <head>
@@ -13,14 +12,12 @@
         <button onclick="goBack()" class="back-btn">← יציאה</button>
         <h1>ניהול מערכת</h1>
       </div>
-      
+
       <div class="app-content fade-in">
-        <!-- תפריט ניהול -->
-        <div class="card">
-          <div class="card-header">תפריט ניהול</div>
-          <button onclick="showSection('users')" class="btn btn-secondary">ניהול משתמשים</button>
-          <button onclick="showSection('routes')" class="btn btn-secondary">ניהול מסלולים</button>
-          <button onclick="showSection('add-route')" class="btn btn-primary">הוספת מסלול חדש</button>
+        <!-- ניהול משתמשים -->
+        <div class="card" id="user-management-section">
+          <div class="card-header">ניהול משתמשים</div>
+          <button onclick="showSection('users')" class="btn btn-primary">ניהול משתמשים</button>
         </div>
 
         <!-- ניהול משתמשים -->
@@ -30,116 +27,7 @@
           <div id="users-container"></div>
         </div>
 
-        <!-- ניהול מסלולים -->
-        <div id="routes-section" class="card" style="display: none;">
-          <div class="card-header">ניהול מסלולים</div>
-          <div id="routes-loading" class="loading">טוען מסלולים...</div>
-          <div id="admin-routes-container"></div>
-        </div>
 
-        <!-- הוספת מסלול חדש -->
-        <div id="add-route-section" class="card" style="display: none;">
-          <div class="card-header">הוספת מסלול חדש</div>
-          
-          <form id="route-form" class="form-container">
-            <div class="form-group">
-              <label for="origin">מוצא</label>
-              <input type="text" id="origin" class="form-input" placeholder="למשל: תל אביב" required />
-            </div>
-            
-            <div class="form-group">
-              <label for="destination">יעד</label>
-              <input type="text" id="destination" class="form-input" placeholder="למשל: ירושלים" required />
-            </div>
-            
-            <div class="form-group">
-              <label for="km">מרחק בק"מ משוער</label>
-              <input type="number" id="km" class="form-input" placeholder="65" required />
-            </div>
-            
-            <div class="form-group">
-              <label for="waitTimeSides">זמן המתנה צדדים (דקות)</label>
-              <input type="number" id="waitTimeSides" class="form-input" placeholder="15" />
-            </div>
-            
-            <div class="vehicles-section">
-              <div class="vehicle-row">
-                <div class="form-group">
-                  <label for="car4">רכב 4 מקומות</label>
-                  <input type="number" id="car4" class="form-input" placeholder="120" />
-                </div>
-                <div class="form-group">
-                  <label for="car4Sides">צדדים</label>
-                  <input type="number" id="car4Sides" class="form-input" placeholder="15" />
-                </div>
-              </div>
-              
-              <div class="vehicle-row">
-                <div class="form-group">
-                  <label for="car6">רכב 6 מקומות</label>
-                  <input type="number" id="car6" class="form-input" placeholder="150" />
-                </div>
-                <div class="form-group">
-                  <label for="car6Sides">צדדים</label>
-                  <input type="number" id="car6Sides" class="form-input" placeholder="20" />
-                </div>
-              </div>
-              
-              <div class="vehicle-row">
-                <div class="form-group">
-                  <label for="car6plus">רכב 6 מקומות מרווח</label>
-                  <input type="number" id="car6plus" class="form-input" placeholder="180" />
-                </div>
-                <div class="form-group">
-                  <label for="car6plusSides">צדדים</label>
-                  <input type="number" id="car6plusSides" class="form-input" placeholder="25" />
-                </div>
-              </div>
-            </div>
-            
-            <button type="submit" class="btn btn-primary">שמור מסלול</button>
-          </form>
-          
-          <div id="route-msg" class="message" style="display: none;"></div>
-        </div>
-
-        <!-- עדכון מסלול -->
-        <div id="edit-route-section" class="card" style="display: none;">
-          <div class="card-header">עדכון מסלול</div>
-          
-          <form id="edit-route-form" class="form-container">
-            <input type="hidden" id="edit-route-id" />
-            
-            <div class="form-group">
-              <label for="edit-origin">עיר יציאה</label>
-              <input type="text" id="edit-origin" class="form-input" required />
-            </div>
-            
-            <div class="form-group">
-              <label for="edit-destination">עיר יעד</label>
-              <input type="text" id="edit-destination" class="form-input" required />
-            </div>
-            
-            <div class="form-group">
-              <label for="edit-km">מרחק בק"מ</label>
-              <input type="number" id="edit-km" class="form-input" required />
-            </div>
-            
-            <div class="form-group">
-              <label for="edit-waitTime">זמן המתנה (דקות)</label>
-              <input type="number" id="edit-waitTime" class="form-input" required />
-            </div>
-            
-            <div class="card-header">רכבים זמינים</div>
-            <div id="edit-vehicles-container"></div>
-            
-            <button type="button" onclick="addEditVehicleInput()" class="btn btn-secondary">הוסף רכב נוסף</button>
-            <button type="submit" class="btn btn-success">עדכן מסלול</button>
-            <button type="button" onclick="cancelEdit()" class="btn btn-secondary">בטל</button>
-          </form>
-          
-          <div id="edit-route-msg" class="message" style="display: none;"></div>
-        </div>
       </div>
     </div>
 
@@ -147,10 +35,35 @@
       let currentSection = '';
       let allUsers = [];
       let allRoutes = [];
+      let currentUserRole = null;
 
       function goBack() {
-        localStorage.removeItem('savedLogin');
-        window.location.href = '/';
+        window.history.back();
+      }
+
+      function showUserDetails(user) {
+        const details = `
+          <strong>פרטי המשתמש:</strong><br>
+          שם: ${user.firstName} ${user.lastName}<br>
+          שם משתמש: ${user.username}<br>
+          מייל: ${user.email}<br>
+          טלפון: ${user.phone}<br>
+          תפקיד: ${user.role === 'admin' ? 'מנהל' : user.role === 'route_manager' ? 'מנהל מסלולים' : 'לקוח'}<br>
+          סטטוס: ${user.approved ? 'מאושר' : 'ממתין לאישור'}
+        `;
+
+        const popup = document.createElement('div');
+        popup.style.cssText = `
+          position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+          background: white; border: 2px solid #007bff; border-radius: 10px;
+          padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000;
+          max-width: 400px; direction: rtl;
+        `;
+        popup.innerHTML = `
+          ${details}
+          <br><button onclick="this.parentElement.remove()" style="margin-top: 15px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">סגור</button>
+        `;
+        document.body.appendChild(popup);
       }
 
       function showSection(section) {
@@ -158,11 +71,11 @@
         document.querySelectorAll('[id$="-section"]').forEach(el => {
           el.style.display = 'none';
         });
-        
+
         // הצגת הסקציה הנבחרת
         document.getElementById(section + '-section').style.display = 'block';
         currentSection = section;
-        
+
         // טעינת נתונים בהתאם
         if (section === 'users') loadUsers();
         else if (section === 'routes') loadAdminRoutes();
@@ -184,7 +97,7 @@
 
       function displayUsers(users) {
         const container = document.getElementById('users-container');
-        
+
         if (users.length === 0) {
           container.innerHTML = '<div class="message">אין משתמשים רשומים</div>';
           return;
@@ -203,6 +116,7 @@
               <div><strong>אימייל:</strong> ${user.email}</div>
               <div><strong>טלפון:</strong> ${user.phone}</div>
               <div style="margin-top: 10px;">
+                <button onclick="showUserDetails(${JSON.stringify(user).replace(/"/g, '&quot;')})" class="btn btn-info">פרטים</button>
                 ${!user.approved ? 
                   `<button onclick="approveUser('${user._id}')" class="btn btn-success btn-small">אשר משתמש</button>` : 
                   '<span style="color: #28a745;">✓ משתמש מאושר</span>'
@@ -230,7 +144,7 @@
 
       function displayAdminRoutes(routes) {
         const container = document.getElementById('admin-routes-container');
-        
+
         if (routes.length === 0) {
           container.innerHTML = '<div class="message">אין מסלולים במערכת</div>';
           return;
@@ -282,29 +196,29 @@
       // שמירת מסלול חדש
       document.getElementById('route-form').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
+
         const origin = document.getElementById('origin').value;
         const destination = document.getElementById('destination').value;
         const km = document.getElementById('km').value;
         const waitTimeSides = document.getElementById('waitTimeSides').value;
-        
+
         const vehicles = {
           car4: document.getElementById('car4').value || null,
           car6: document.getElementById('car6').value || null,
           car6plus: document.getElementById('car6plus').value || null
         };
-        
+
         const vehiclesSides = {
           car4: document.getElementById('car4Sides').value || null,
           car6: document.getElementById('car6Sides').value || null,
           car6plus: document.getElementById('car6plusSides').value || null
         };
-        
+
         const msgEl = document.getElementById('route-msg');
         msgEl.textContent = 'שומר מסלול...';
         msgEl.className = 'message';
         msgEl.style.display = 'block';
-        
+
         try {
           const response = await fetch('/api/admin/add-route', {
             method: 'POST',
@@ -318,14 +232,14 @@
               vehiclesSides
             })
           });
-          
+
           const result = await response.json();
-          
+
           if (response.ok) {
             msgEl.textContent = result.message;
             msgEl.className = 'message success';
             document.getElementById('route-form').reset();
-            
+
             // רענון רשימת המסלולים אם פתוחה
             if (currentSection === 'routes') {
               loadAdminRoutes();
@@ -344,19 +258,19 @@
       function editRoute(routeId) {
         const route = allRoutes.find(r => r._id === routeId);
         if (!route) return;
-        
+
         const [origin, destination] = route.route.split(' - ');
-        
+
         document.getElementById('edit-route-id').value = routeId;
         document.getElementById('edit-origin').value = origin;
         document.getElementById('edit-destination').value = destination;
         document.getElementById('edit-km').value = route.km;
         document.getElementById('edit-waitTime').value = route.waitTime;
-        
+
         // טעינת רכבים לעריכה
         const editVehiclesContainer = document.getElementById('edit-vehicles-container');
         editVehiclesContainer.innerHTML = '';
-        
+
         if (route.vehicles && route.vehicles.length > 0) {
           route.vehicles.forEach(vehicle => {
             addEditVehicleInput(vehicle);
@@ -364,7 +278,7 @@
         } else {
           addEditVehicleInput();
         }
-        
+
         // הסתרת סקציית מסלולים והצגת עריכה
         document.getElementById('routes-section').style.display = 'none';
         document.getElementById('edit-route-section').style.display = 'block';
@@ -400,12 +314,12 @@
       // מחיקת מסלול
       async function deleteRoute(routeId) {
         if (!confirm('האם אתה בטוח שברצונך למחוק את המסלול?')) return;
-        
+
         try {
           const response = await fetch(`/api/admin/routes/${routeId}`, {
             method: 'DELETE'
           });
-          
+
           if (response.ok) {
             loadAdminRoutes(); // רענון הרשימה
           } else {
@@ -422,7 +336,7 @@
           const response = await fetch(`/api/admin/users/${userId}/approve`, {
             method: 'PUT'
           });
-          
+
           if (response.ok) {
             loadUsers(); // רענון הרשימה
           } else {
@@ -436,12 +350,12 @@
       // מחיקת משתמש
       async function deleteUser(userId) {
         if (!confirm('האם אתה בטוח שברצונך למחוק את המשתמש?')) return;
-        
+
         try {
           const response = await fetch(`/api/admin/users/${userId}`, {
             method: 'DELETE'
           });
-          
+
           if (response.ok) {
             loadUsers(); // רענון הרשימה
           } else {
@@ -452,10 +366,435 @@
         }
       }
 
-      // הצגת הוספת מסלול כברירת מחדל
+      // הצגת ניהול משתמשים כברירת מחדל
       window.addEventListener('load', function() {
-        showSection('add-route');
+        showSection('users');
       });
+
+      // טעינת נתונים בעת הטעינה
+      window.addEventListener("DOMContentLoaded", () => {
+        checkUserRole();
+        loadUsers();
+        loadAdminRoutes();
+      });
+
+      // בדיקת תפקיד המשתמש
+      async function checkUserRole() {
+        const saved = JSON.parse(localStorage.getItem("savedLogin"));
+        if (saved && saved.role) {
+          currentUserRole = saved.role;
+          if (currentUserRole === "route_manager") {
+            // הסתרת ניהול משתמשים ממנהלי מסלולים
+            document.getElementById("user-management-section").style.display = "none";
+          }
+        }
+      }
     </script>
+  </body>
+</html>
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>פאנל ניהול - מערכת הזמנת נסיעות</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="app-header">
+        <h1>פאנל ניהול</h1>
+        <button onclick="logout()" class="btn btn-secondary">התנתק</button>
+      </div>
+      
+      <div class="app-content">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="showTab('routes')">ניהול מסלולים</button>
+          <button class="tab-btn" onclick="showTab('users')">ניהול משתמשים</button>
+        </div>
+
+        <!-- טאב מסלולים -->
+        <div id="routes-tab" class="tab-content active">
+          <div class="card">
+            <div class="card-header">הוספת מסלול חדש</div>
+            <form id="route-form" class="form-container">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="origin">מוצא</label>
+                  <input type="text" id="origin" class="form-input" required />
+                </div>
+                <div class="form-group">
+                  <label for="destination">יעד</label>
+                  <input type="text" id="destination" class="form-input" required />
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="km">מרחק (ק״מ)</label>
+                <input type="number" id="km" class="form-input" required />
+              </div>
+              
+              <div class="form-group">
+                <label for="waitTimeSides">זמן המתנה (דקות)</label>
+                <input type="number" id="waitTimeSides" class="form-input" />
+              </div>
+              
+              <div class="vehicles-section">
+                <h3>מחירי רכבים - כיוון אחד</h3>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="car4">רכב עד 4 נוסעים</label>
+                    <input type="number" id="car4" class="form-input" />
+                  </div>
+                  <div class="form-group">
+                    <label for="car6">רכב עד 6 נוסעים</label>
+                    <input type="number" id="car6" class="form-input" />
+                  </div>
+                  <div class="form-group">
+                    <label for="car6plus">רכב 6+ נוסעים</label>
+                    <input type="number" id="car6plus" class="form-input" />
+                  </div>
+                </div>
+              </div>
+              
+              <div class="vehicles-section">
+                <h3>מחירי רכבים - הלוך ושוב</h3>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="car4-sides">רכב עד 4 נוסעים</label>
+                    <input type="number" id="car4-sides" class="form-input" />
+                  </div>
+                  <div class="form-group">
+                    <label for="car6-sides">רכב עד 6 נוסעים</label>
+                    <input type="number" id="car6-sides" class="form-input" />
+                  </div>
+                  <div class="form-group">
+                    <label for="car6plus-sides">רכב 6+ נוסעים</label>
+                    <input type="number" id="car6plus-sides" class="form-input" />
+                  </div>
+                </div>
+              </div>
+              
+              <button type="submit" class="btn btn-primary">הוסף מסלול</button>
+            </form>
+            <div id="route-msg" class="message" style="display: none;"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">מסלולים קיימים</div>
+            <div id="routes-list"></div>
+          </div>
+        </div>
+
+        <!-- טאב משתמשים -->
+        <div id="users-tab" class="tab-content">
+          <div class="card">
+            <div class="card-header">משתמשים רשומים</div>
+            <div id="users-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentUser = null;
+
+      // בדיקת הרשאות אדמין
+      window.addEventListener("DOMContentLoaded", function() {
+        const saved = JSON.parse(localStorage.getItem("savedLogin"));
+        if (!saved || saved.role !== "admin" || new Date().getTime() >= saved.expiry) {
+          window.location.href = "/index.html";
+          return;
+        }
+        currentUser = saved.username;
+        loadRoutes();
+        loadUsers();
+      });
+
+      function showTab(tabName) {
+        // הסתרת כל הטאבים
+        document.querySelectorAll('.tab-content').forEach(tab => {
+          tab.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        
+        // הצגת הטאב הנבחר
+        document.getElementById(tabName + '-tab').classList.add('active');
+        event.target.classList.add('active');
+        
+        if (tabName === 'routes') loadRoutes();
+        else if (tabName === 'users') loadUsers();
+      }
+
+      function logout() {
+        localStorage.removeItem("savedLogin");
+        window.location.href = "/index.html";
+      }
+
+      // הוספת מסלול
+      document.getElementById("route-form").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        
+        const msgEl = document.getElementById("route-msg");
+        const formData = {
+          origin: document.getElementById("origin").value,
+          destination: document.getElementById("destination").value,
+          km: parseInt(document.getElementById("km").value),
+          waitTimeSides: parseInt(document.getElementById("waitTimeSides").value) || 0,
+          vehicles: {
+            car4: document.getElementById("car4").value ? parseInt(document.getElementById("car4").value) : null,
+            car6: document.getElementById("car6").value ? parseInt(document.getElementById("car6").value) : null,
+            car6plus: document.getElementById("car6plus").value ? parseInt(document.getElementById("car6plus").value) : null
+          },
+          vehiclesSides: {
+            car4: document.getElementById("car4-sides").value ? parseInt(document.getElementById("car4-sides").value) : null,
+            car6: document.getElementById("car6-sides").value ? parseInt(document.getElementById("car6-sides").value) : null,
+            car6plus: document.getElementById("car6plus-sides").value ? parseInt(document.getElementById("car6plus-sides").value) : null
+          },
+          adminUsername: currentUser
+        };
+
+        msgEl.textContent = "מוסיף מסלול...";
+        msgEl.className = "message";
+        msgEl.style.display = "block";
+
+        try {
+          const res = await fetch("/api/admin/add-route", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData)
+          });
+          
+          const data = await res.json();
+          
+          if (res.ok) {
+            msgEl.textContent = data.message;
+            msgEl.className = "message success";
+            document.getElementById("route-form").reset();
+            loadRoutes();
+          } else {
+            msgEl.textContent = data.message;
+            msgEl.className = "message error";
+          }
+        } catch (error) {
+          msgEl.textContent = "שגיאה בחיבור לשרת";
+          msgEl.className = "message error";
+        }
+      });
+
+      // טעינת מסלולים
+      async function loadRoutes() {
+        try {
+          const res = await fetch("/api/admin/routes");
+          const routes = await res.json();
+          
+          const routesList = document.getElementById("routes-list");
+          if (routes.length === 0) {
+            routesList.innerHTML = "<p>אין מסלולים במערכת</p>";
+            return;
+          }
+          
+          routesList.innerHTML = routes.map(route => `
+            <div class="route-item">
+              <div class="route-header">
+                <h3>${route.route}</h3>
+                <div class="route-actions">
+                  <button onclick="editRoute('${route._id}')" class="btn btn-small">עריכה</button>
+                  <button onclick="deleteRoute('${route._id}')" class="btn btn-small btn-danger">מחיקה</button>
+                </div>
+              </div>
+              <div class="route-details">
+                <p><strong>מרחק:</strong> ${route.km} ק״מ</p>
+                <p><strong>זמן המתנה:</strong> ${route.waitTimeSides || 0} דקות</p>
+                ${route.addedBy ? `<p><strong>נוסף על ידי:</strong> ${route.addedBy}</p>` : ''}
+                ${route.addedDate ? `<p><strong>תאריך הוספה:</strong> ${new Date(route.addedDate).toLocaleDateString('he-IL')}</p>` : ''}
+                ${route.lastModifiedBy ? `<p><strong>עודכן על ידי:</strong> ${route.lastModifiedBy}</p>` : ''}
+                ${route.lastModifiedDate ? `<p><strong>תאריך עדכון:</strong> ${new Date(route.lastModifiedDate).toLocaleDateString('he-IL')}</p>` : ''}
+              </div>
+            </div>
+          `).join('');
+        } catch (error) {
+          console.error("שגיאה בטעינת מסלולים:", error);
+        }
+      }
+
+      // מחיקת מסלול
+      async function deleteRoute(id) {
+        if (!confirm("האם אתה בטוח שברצונך למחוק את המסלול?")) return;
+        
+        try {
+          const res = await fetch(`/api/admin/routes/${id}`, {
+            method: "DELETE"
+          });
+          
+          if (res.ok) {
+            loadRoutes();
+          } else {
+            alert("שגיאה במחיקת המסלול");
+          }
+        } catch (error) {
+          alert("שגיאה בחיבור לשרת");
+        }
+      }
+
+      // טעינת משתמשים
+      async function loadUsers() {
+        try {
+          const res = await fetch("/api/users");
+          const users = await res.json();
+          
+          const usersList = document.getElementById("users-list");
+          usersList.innerHTML = users.map(user => `
+            <div class="user-item">
+              <div class="user-info">
+                <h3>${user.firstName} ${user.lastName} (${user.username})</h3>
+                <p>תפקיד: ${user.role}</p>
+                <p>סטטוס: ${user.approved ? 'מאושר' : 'לא מאושר'}</p>
+              </div>
+              <div class="user-actions">
+                ${!user.approved ? `<button onclick="approveUser('${user._id}')" class="btn btn-small">אשר</button>` : ''}
+                <button onclick="deleteUser('${user._id}')" class="btn btn-small btn-danger">מחק</button>
+              </div>
+            </div>
+          `).join('');
+        } catch (error) {
+          console.error("שגיאה בטעינת משתמשים:", error);
+        }
+      }
+
+      // אישור משתמש
+      async function approveUser(id) {
+        try {
+          const res = await fetch(`/api/admin/users/${id}/approve`, {
+            method: "PUT"
+          });
+          
+          if (res.ok) {
+            loadUsers();
+          }
+        } catch (error) {
+          alert("שגיאה באישור המשתמש");
+        }
+      }
+
+      // מחיקת משתמש
+      async function deleteUser(id) {
+        if (!confirm("האם אתה בטוח שברצונך למחוק את המשתמש?")) return;
+        
+        try {
+          const res = await fetch(`/api/admin/users/${id}`, {
+            method: "DELETE"
+          });
+          
+          if (res.ok) {
+            loadUsers();
+          }
+        } catch (error) {
+          alert("שגיאה במחיקת המשתמש");
+        }
+      }
+    </script>
+
+    <style>
+      .tabs {
+        display: flex;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #ddd;
+      }
+      
+      .tab-btn {
+        padding: 10px 20px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        border-bottom: 2px solid transparent;
+      }
+      
+      .tab-btn.active {
+        border-bottom-color: #007bff;
+        color: #007bff;
+      }
+      
+      .tab-content {
+        display: none;
+      }
+      
+      .tab-content.active {
+        display: block;
+      }
+      
+      .form-row {
+        display: flex;
+        gap: 15px;
+      }
+      
+      .form-row .form-group {
+        flex: 1;
+      }
+      
+      .vehicles-section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      
+      .vehicles-section h3 {
+        margin-top: 0;
+        color: #333;
+      }
+      
+      .route-item, .user-item {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 10px;
+      }
+      
+      .route-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      
+      .route-header h3 {
+        margin: 0;
+      }
+      
+      .route-actions, .user-actions {
+        display: flex;
+        gap: 10px;
+      }
+      
+      .btn-small {
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+      
+      .btn-danger {
+        background-color: #dc3545;
+      }
+      
+      .btn-danger:hover {
+        background-color: #c82333;
+      }
+      
+      .route-details p {
+        margin: 5px 0;
+        font-size: 14px;
+      }
+      
+      .user-info h3 {
+        margin: 0 0 10px 0;
+      }
+      
+      .user-info p {
+        margin: 5px 0;
+      }
+    </style>
   </body>
 </html>

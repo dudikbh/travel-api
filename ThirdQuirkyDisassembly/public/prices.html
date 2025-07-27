@@ -1,5 +1,3 @@
-
-
 <!doctype html>
 <html lang="he" dir="rtl">
   <head>
@@ -15,12 +13,12 @@
         <h1>חיפוש מסלולים</h1>
         <button onclick="logout()" class="logout-btn">התנתק</button>
       </div>
-      
+
       <div class="app-content fade-in">
         <!-- חיפוש מסלולים -->
         <div class="card">
           <div class="card-header">חפש מסלול</div>
-          
+
           <div class="search-container">
             <div class="search-row">
               <div class="form-group">
@@ -34,7 +32,7 @@
                 />
                 <datalist id="origins-list"></datalist>
               </div>
-              
+
               <div class="form-group">
                 <label for="destination">יעד</label>
                 <input 
@@ -47,7 +45,7 @@
                 <datalist id="destinations-list"></datalist>
               </div>
             </div>
-            
+
             <div class="search-buttons">
               <button onclick="searchRoute()" class="btn btn-primary">חפש</button>
               <button onclick="resetSearch()" class="btn btn-secondary">איפוס</button>
@@ -59,7 +57,7 @@
         <div id="search-results" class="card" style="display: none;">
           <div class="card-header">תוצאות חיפוש</div>
           <div id="route-details"></div>
-          
+
           <!-- כפתור שיתוף לווטסאפ -->
           <div class="share-section" style="text-align: center; margin-top: 20px;">
             <button id="whatsapp-btn" onclick="shareToWhatsApp()" class="whatsapp-btn" style="display: none;">
@@ -139,6 +137,12 @@
         });
       }
 
+      // פונקציה לנרמול מסלול (כמו בשרת)
+      function normalizeRoute(origin, destination) {
+        const cities = [origin.trim(), destination.trim()].sort();
+        return `${cities[0]} - ${cities[1]}`;
+      }
+
       // חיפוש מסלול
       function searchRoute() {
         const origin = document.getElementById('origin').value.trim();
@@ -149,58 +153,65 @@
           return;
         }
 
-        const searchQuery = `${origin} - ${destination}`;
-        const foundRoute = allRoutes.find(route => 
-          route.route && route.route.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        // נרמול החיפוש - מסדר את שתי הערים לפי אלפבית כמו במסד הנתונים
+        const normalizedSearch = normalizeRoute(origin, destination);
+        
+        // חיפוש מדויק לפי הנרמול
+        let foundRoute = allRoutes.find(route => {
+          if (!route.route) return false;
+          const routeNormalized = normalizeRoute(
+            route.route.split(' - ')[0], 
+            route.route.split(' - ')[1]
+          );
+          return routeNormalized.toLowerCase() === normalizedSearch.toLowerCase();
+        });
+
+        if (!foundRoute) {
+          // חיפוש גמיש - מחפש את שתי הערים במסלול ללא תלות בסדר
+          foundRoute = allRoutes.find(route => {
+            if (!route.route) return false;
+            const routeLower = route.route.toLowerCase();
+            const originLower = origin.toLowerCase();
+            const destinationLower = destination.toLowerCase();
+            
+            return routeLower.includes(originLower) && routeLower.includes(destinationLower);
+          });
+        }
 
         if (foundRoute) {
           currentRoute = foundRoute;
           displayRouteDetails(foundRoute);
           document.getElementById('whatsapp-btn').style.display = 'inline-block';
         } else {
-          // חיפוש חלקי
-          const partialMatch = allRoutes.find(route => 
-            route.route && 
-            route.route.toLowerCase().includes(origin.toLowerCase()) &&
-            route.route.toLowerCase().includes(destination.toLowerCase())
-          );
-
-          if (partialMatch) {
-            currentRoute = partialMatch;
-            displayRouteDetails(partialMatch);
-            document.getElementById('whatsapp-btn').style.display = 'inline-block';
-          } else {
-            document.getElementById('search-results').style.display = 'block';
-            document.getElementById('route-details').innerHTML = `
-              <div class="no-results">
-                <p>לא נמצא מסלול מ${origin} ל${destination}</p>
-                <p>אנא בדוק את הפרטים או פנה לשירות לקוחות</p>
-              </div>
-            `;
-            document.getElementById('whatsapp-btn').style.display = 'none';
-          }
+          document.getElementById('search-results').style.display = 'block';
+          document.getElementById('route-details').innerHTML = `
+            <div class="no-results">
+              <p>לא נמצא מסלול מ${origin} ל${destination}</p>
+              <p>אנא בדוק את הפרטים או פנה לשירות לקוחות</p>
+            </div>
+          `;
+          document.getElementById('whatsapp-btn').style.display = 'none';
         }
       }
 
       // הצגת פרטי המסלול
       function displayRouteDetails(route) {
         document.getElementById('search-results').style.display = 'block';
-        
+
         let html = `<div class="route-info"><h3>${route.route}</h3>`;
-        
+
         // פרטי המסלול
         if (route.km) {
           html += `<div class="detail-item"><strong>מרחק משוער:</strong> ${route.km} ק"מ</div>`;
         }
-        
+
         if (route.waitTimeSides) {
           html += `<div class="detail-item"><strong>זמן המתנה צדדים:</strong> ${route.waitTimeSides} דקות</div>`;
         }
-        
+
         // מחירי רכבים
         html += '<div class="prices-section"><h4>מחירים:</h4>';
-        
+
         if (route.vehicles?.car4) {
           html += `<div class="price-item">🚗 <strong>רכב 4 מקומות:</strong> ₪${route.vehicles.car4}`;
           if (route.vehiclesSides?.car4) {
@@ -208,7 +219,7 @@
           }
           html += '</div>';
         }
-        
+
         if (route.vehicles?.car6) {
           html += `<div class="price-item">🚐 <strong>רכב 6 מקומות:</strong> ₪${route.vehicles.car6}`;
           if (route.vehiclesSides?.car6) {
@@ -216,7 +227,7 @@
           }
           html += '</div>';
         }
-        
+
         if (route.vehicles?.car6plus) {
           html += `<div class="price-item">🚐 <strong>רכב 6 מקומות מרווח:</strong> ₪${route.vehicles.car6plus}`;
           if (route.vehiclesSides?.car6plus) {
@@ -224,9 +235,9 @@
           }
           html += '</div>';
         }
-        
+
         html += '</div></div>';
-        
+
         document.getElementById('route-details').innerHTML = html;
       }
 
@@ -235,12 +246,12 @@
         if (!currentRoute) return;
 
         let message = `🚗 פרטי מסלול: ${currentRoute.route}\n`;
-        
+
         if (currentRoute.km) message += `📏 מרחק משוער: ${currentRoute.km} ק"מ\n`;
         if (currentRoute.waitTimeSides) message += `⏳ זמן המתנה צדדים: ${currentRoute.waitTimeSides} דקות\n`;
-        
+
         message += '\n💰 מחירים:\n';
-        
+
         if (currentRoute.vehicles?.car4) {
           message += `🚗 רכב 4 מקומות: ₪${currentRoute.vehicles.car4}`;
           if (currentRoute.vehiclesSides?.car4) {
@@ -248,7 +259,7 @@
           }
           message += '\n';
         }
-        
+
         if (currentRoute.vehicles?.car6) {
           message += `🚐 רכב 6 מקומות: ₪${currentRoute.vehicles.car6}`;
           if (currentRoute.vehiclesSides?.car6) {
@@ -256,7 +267,7 @@
           }
           message += '\n';
         }
-        
+
         if (currentRoute.vehicles?.car6plus) {
           message += `🚐 רכב 6 מקומות מרווח: ₪${currentRoute.vehicles.car6plus}`;
           if (currentRoute.vehiclesSides?.car6plus) {
@@ -287,4 +298,3 @@
     </script>
   </body>
 </html>
-

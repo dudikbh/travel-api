@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ניהול מסלולים - מערכת הזמנת נסיעות</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="app-header">
+        <button onclick="goBack()" class="back-btn">← אחורה</button>
+        <h1>ניהול מסלולים</h1>
+      </div>
+
+      <div class="app-content fade-in">
+        <!-- תפריט ניווט -->
+        <div class="card">
+          <div class="card-header">פעולות זמינות</div>
+          <button onclick="showSection('routes')" class="btn btn-secondary">ניהול מסלולים</button>
+          <button onclick="showSection('add-route')" class="btn btn-primary">הוספת מסלול חדש</button>
+          <button onclick="showSection('search')" class="btn btn-secondary">חיפוש מסלולים</button>
+        </div>
+
+        <!-- ניהול מסלולים -->
+        <div id="routes-section" class="card" style="display: none;">
+          <div class="card-header">ניהול מסלולים</div>
+          <div id="routes-loading" class="loading">טוען מסלולים...</div>
+          <div id="admin-routes-container"></div>
+        </div>
+
+        <!-- הוספת מסלול חדש -->
+        <div id="add-route-section" class="card" style="display: none;">
+          <div class="card-header">הוספת מסלול חדש</div>
+
+          <form id="route-form" class="form-container">
+            <div class="form-group">
+              <label for="origin">מוצא</label>
+              <input type="text" id="origin" class="form-input" placeholder="למשל: תל אביב" required />
+            </div>
+
+            <div class="form-group">
+              <label for="destination">יעד</label>
+              <input type="text" id="destination" class="form-input" placeholder="למשל: ירושלים" required />
+            </div>
+
+            <div class="form-group">
+              <label for="km">מרחק בק"מ משוער</label>
+              <input type="number" id="km" class="form-input" placeholder="65" required />
+            </div>
+
+            <div class="form-group">
+              <label for="waitTimeSides">זמן המתנה צדדים (דקות)</label>
+              <input type="number" id="waitTimeSides" class="form-input" placeholder="15" />
+            </div>
+
+            <div class="vehicles-section">
+              <div class="vehicle-row">
+                <div class="form-group">
+                  <label for="car4">רכב 4 מקומות</label>
+                  <input type="number" id="car4" class="form-input" placeholder="120" />
+                </div>
+                <div class="form-group">
+                  <label for="car4Sides">צדדים</label>
+                  <input type="number" id="car4Sides" class="form-input" placeholder="15" />
+                </div>
+              </div>
+
+              <div class="vehicle-row">
+                <div class="form-group">
+                  <label for="car6">רכב 6 מקומות</label>
+                  <input type="number" id="car6" class="form-input" placeholder="150" />
+                </div>
+                <div class="form-group">
+                  <label for="car6Sides">צדדים</label>
+                  <input type="number" id="car6Sides" class="form-input" placeholder="20" />
+                </div>
+              </div>
+
+              <div class="vehicle-row">
+                <div class="form-group">
+                  <label for="car6plus">רכב 6 מקומות מרווח</label>
+                  <input type="number" id="car6plus" class="form-input" placeholder="180" />
+                </div>
+                <div class="form-group">
+                  <label for="car6plusSides">צדדים</label>
+                  <input type="number" id="car6plusSides" class="form-input" placeholder="25" />
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">שמור מסלול</button>
+          </form>
+
+          <div id="route-msg" class="message" style="display: none;"></div>
+        </div>
+
+        <!-- חיפוש מסלולים -->
+        <div id="search-section" class="card" style="display: none;">
+          <div class="card-header">חיפוש מסלולים</div>
+
+          <div class="search-container">
+            <div class="search-row">
+              <div class="form-group">
+                <label for="search-origin">מוצא</label>
+                <input 
+                  type="text" 
+                  id="search-origin" 
+                  class="form-input" 
+                  placeholder="הכנס עיר יציאה"
+                  list="origins-list"
+                />
+                <datalist id="origins-list"></datalist>
+              </div>
+
+              <div class="form-group">
+                <label for="search-destination">יעד</label>
+                <input 
+                  type="text" 
+                  id="search-destination" 
+                  class="form-input" 
+                  placeholder="הכנס עיר יעד"
+                  list="destinations-list"
+                />
+                <datalist id="destinations-list"></datalist>
+              </div>
+            </div>
+
+            <div class="search-buttons">
+              <button onclick="searchRoutes()" class="btn btn-primary">חפש</button>
+              <button onclick="resetSearch()" class="btn btn-secondary">איפוס</button>
+            </div>
+          </div>
+
+          <div id="search-results" class="search-results"></div>
+
+          <div class="whatsapp-container">
+            <a href="#" id="whatsapp-btn" class="whatsapp-btn" style="display: none;">
+              <img src="data:image/svg+xml;base64,..." alt="WhatsApp" width="20" height="20" />
+              שתף בוואטסאפ
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentSection = '';
+      let allRoutes = [];
+      let searchResults = [];
+
+      function goBack() {
+        window.history.back();
+      }
+
+      function showSection(section) {
+        document.querySelectorAll('[id$="-section"]').forEach(el => {
+          el.style.display = 'none';
+        });
+
+        document.getElementById(section + '-section').style.display = 'block';
+        currentSection = section;
+
+        if (section === 'routes') loadRoutes();
+        else if (section === 'search') {
+          loadAllRoutes();
+          updateAutocomplete();
+        }
+      }
+
+      // טעינת מסלולים לניהול
+      async function loadRoutes() {
+        try {
+          const response = await fetch('/api/prices');
+          const routes = await response.json();
+          allRoutes = routes;
+          displayRoutes(routes);
+          document.getElementById('routes-loading').style.display = 'none';
+        } catch (error) {
+          document.getElementById('routes-loading').innerHTML = 
+            '<div class="message error">שגיאה בטעינת המסלולים</div>';
+        }
+      }
+
+      function displayRoutes(routes) {
+        const container = document.getElementById('admin-routes-container');
+
+        if (routes.length === 0) {
+          container.innerHTML = '<div class="message">אין מסלולים במערכת</div>';
+          return;
+        }
+
+        container.innerHTML = routes.map(route => `
+          <div class="list-item">
+            <div class="list-item-header">${route.route}</div>
+            <div class="list-item-content">
+              <div><strong>מרחק:</strong> ${route.km} ק"מ</div>
+              <div><strong>זמן המתנה צדדים:</strong> ${route.waitTimeSides || 'לא צוין'} דקות</div>
+              <div style="margin-top: 10px;">
+                <button onclick="deleteRoute('${route._id}')" class="btn btn-danger btn-small">מחק</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // שמירת מסלול חדש
+      document.getElementById('route-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const origin = document.getElementById('origin').value;
+        const destination = document.getElementById('destination').value;
+        const km = document.getElementById('km').value;
+        const waitTimeSides = document.getElementById('waitTimeSides').value;
+
+        const vehicles = {
+          car4: document.getElementById('car4').value || null,
+          car6: document.getElementById('car6').value || null,
+          car6plus: document.getElementById('car6plus').value || null
+        };
+
+        const vehiclesSides = {
+          car4: document.getElementById('car4Sides').value || null,
+          car6: document.getElementById('car6Sides').value || null,
+          car6plus: document.getElementById('car6plusSides').value || null
+        };
+
+        const msgEl = document.getElementById('route-msg');
+        msgEl.textContent = 'שומר מסלול...';
+        msgEl.className = 'message';
+        msgEl.style.display = 'block';
+
+        try {
+          const response = await fetch('/api/admin/add-route', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              origin, 
+              destination, 
+              km: parseInt(km), 
+              waitTimeSides: waitTimeSides ? parseInt(waitTimeSides) : null,
+              vehicles,
+              vehiclesSides
+            })
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            msgEl.textContent = result.message;
+            msgEl.className = 'message success';
+            document.getElementById('route-form').reset();
+
+            if (currentSection === 'routes') {
+              loadRoutes();
+            }
+          } else {
+            msgEl.textContent = result.message;
+            msgEl.className = 'message error';
+          }
+        } catch (error) {
+          msgEl.textContent = 'שגיאה בשמירת המסלול';
+          msgEl.className = 'message error';
+        }
+      });
+
+      // מחיקת מסלול
+      async function deleteRoute(routeId) {
+        if (!confirm('האם אתה בטוח שברצונך למחוק את המסלול?')) return;
+
+        try {
+          const response = await fetch(`/api/admin/routes/${routeId}`, {
+            method: 'DELETE'
+          });
+
+          if (response.ok) {
+            loadRoutes();
+          } else {
+            alert('שגיאה במחיקת המסלול');
+          }
+        } catch (error) {
+          alert('שגיאה במחיקת המסלול');
+        }
+      }
+
+      // פונקציות חיפוש
+      async function loadAllRoutes() {
+        try {
+          const response = await fetch('/api/prices');
+          allRoutes = await response.json();
+        } catch (error) {
+          console.error('שגיאה בטעינת המסלולים:', error);
+        }
+      }
+
+      function updateAutocomplete() {
+        const origins = new Set();
+        const destinations = new Set();
+
+        allRoutes.forEach(route => {
+          const [origin, destination] = route.route.split(' - ');
+          origins.add(origin);
+          destinations.add(destination);
+        });
+
+        document.getElementById('origins-list').innerHTML = 
+          Array.from(origins).map(city => `<option value="${city}">`).join('');
+
+        document.getElementById('destinations-list').innerHTML = 
+          Array.from(destinations).map(city => `<option value="${city}">`).join('');
+      }
+
+      function searchRoutes() {
+        const origin = document.getElementById('search-origin').value.trim();
+        const destination = document.getElementById('search-destination').value.trim();
+
+        if (!origin || !destination) {
+          alert('יש למלא את שדות המוצא והיעד');
+          return;
+        }
+
+        const route = `${origin} - ${destination}`;
+        searchResults = allRoutes.filter(r => r.route === route);
+
+        displaySearchResults();
+      }
+
+      function displaySearchResults() {
+        const container = document.getElementById('search-results');
+        const whatsappBtn = document.getElementById('whatsapp-btn');
+
+        if (searchResults.length === 0) {
+          container.innerHTML = '<div class="message">לא נמצאו מסלולים התואמים לחיפוש</div>';
+          whatsappBtn.style.display = 'none';
+          return;
+        }
+
+        const route = searchResults[0];
+        let pricesHtml = '';
+
+        if (route.vehicles?.car4) {
+          pricesHtml += `<div class="price-item">רכב 4 מקומות: ₪${route.vehicles.car4}`;
+          if (route.vehiclesSides?.car4) pricesHtml += ` (צדדים: ₪${route.vehiclesSides.car4})`;
+          pricesHtml += `</div>`;
+        }
+
+        if (route.vehicles?.car6) {
+          pricesHtml += `<div class="price-item">רכב 6 מקומות: ₪${route.vehicles.car6}`;
+          if (route.vehiclesSides?.car6) pricesHtml += ` (צדדים: ₪${route.vehiclesSides.car6})`;
+          pricesHtml += `</div>`;
+        }
+
+        if (route.vehicles?.car6plus) {
+          pricesHtml += `<div class="price-item">רכב 6 מקומות מרווח: ₪${route.vehicles.car6plus}`;
+          if (route.vehiclesSides?.car6plus) pricesHtml += ` (צדדים: ₪${route.vehiclesSides.car6plus})`;
+          pricesHtml += `</div>`;
+        }
+
+        container.innerHTML = `
+          <div class="route-result">
+            <h3>${route.route}</h3>
+            <div class="route-details">
+              <div><strong>מרחק:</strong> ${route.km} ק"מ</div>
+              ${route.waitTimeSides ? `<div><strong>זמן המתנה צדדים:</strong> ${route.waitTimeSides} דקות</div>` : ''}
+            </div>
+            <div class="prices">
+              <h4>מחירים:</h4>
+              ${pricesHtml}
+            </div>
+          </div>
+        `;
+
+        updateWhatsAppLink(route);
+        whatsappBtn.style.display = 'block';
+      }
+
+      function updateWhatsAppLink(route) {
+        let message = `נסיעה: ${route.route}\n`;
+        message += `מרחק: ${route.km} ק"מ\n`;
+        if (route.waitTimeSides) message += `זמן המתנה צדדים: ${route.waitTimeSides} דקות\n`;
+        message += `\nמחירים:\n`;
+
+        if (route.vehicles?.car4) {
+          message += `רכב 4 מקומות: ₪${route.vehicles.car4}`;
+          if (route.vehiclesSides?.car4) message += ` (צדדים: ₪${route.vehiclesSides.car4})`;
+          message += `\n`;
+        }
+
+        if (route.vehicles?.car6) {
+          message += `רכב 6 מקומות: ₪${route.vehicles.car6}`;
+          if (route.vehiclesSides?.car6) message += ` (צדדים: ₪${route.vehiclesSides.car6})`;
+          message += `\n`;
+        }
+
+        if (route.vehicles?.car6plus) {
+          message += `רכב 6 מקומות מרווח: ₪${route.vehicles.car6plus}`;
+          if (route.vehiclesSides?.car6plus) message += ` (צדדים: ₪${route.vehiclesSides.car6plus})`;
+          message += `\n`;
+        }
+
+        const encodedMessage = encodeURIComponent(message);
+        document.getElementById('whatsapp-btn').href = `https://wa.me/?text=${encodedMessage}`;
+      }
+
+      function resetSearch() {
+        document.getElementById('search-origin').value = '';
+        document.getElementById('search-destination').value = '';
+        document.getElementById('search-results').innerHTML = '';
+        document.getElementById('whatsapp-btn').style.display = 'none';
+      }
+
+      // הצגת הוספת מסלול כברירת מחדל
+      window.addEventListener('load', function() {
+        showSection('add-route');
+      });
+    </script>
+  </body>
+</html>
